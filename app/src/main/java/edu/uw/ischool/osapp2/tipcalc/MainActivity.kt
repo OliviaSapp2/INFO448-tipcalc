@@ -4,12 +4,14 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.widget.ArrayAdapter
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 import android.widget.Toast
 import java.text.NumberFormat
 import java.util.Locale
@@ -18,6 +20,7 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
     private lateinit var tipButton: Button
     private lateinit var amountInput: EditText
+    private lateinit var spinner: Spinner
 
     @SuppressLint("DefaultLocale")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,8 +36,14 @@ class MainActivity : AppCompatActivity() {
         tipButton = findViewById(R.id.button)
         tipButton.isEnabled = false
         amountInput = findViewById(R.id.editTextNumber)
-
+        spinner = findViewById(R.id.spinner)
         var current = ""
+
+        // Set up the spinner with tip options
+        val tipOptions = arrayOf("10%", "15%", "18%", "20%")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, tipOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
 
         amountInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -45,7 +54,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun afterTextChanged(s: Editable?) {
-                //format the currency so it is USD with a $
+                //format the currency so it is in USD with a $
                 if (s.toString() != current) {
                     val cleanString = s.toString().replace("[$,.]".toRegex(), "")
                     val parsed = cleanString.toDoubleOrNull() ?: 0.0
@@ -58,13 +67,14 @@ class MainActivity : AppCompatActivity() {
         })
 
         tipButton.setOnClickListener{
-            //turn from $ string to int in pennies
-            var dollarAmountStr = amountInput.text.toString()
-            var removedDollarSign = dollarAmountStr.substring(1)
-            var amountPennies = (removedDollarSign.toDouble() * 100).toInt()
+            //Change $USD string into pennies int
+            val dollarAmountStr = amountInput.text.toString()
+            val removedDollarSign = dollarAmountStr.substring(1)
+            val amountPennies = (removedDollarSign.toDouble() * 100).toInt()
 
             //calculate tip
-            val afterTip = amountPennies * 1.15
+            val selectedTip = spinner.selectedItem.toString().replace("%", "").toDouble() / 100
+            val afterTip = amountPennies * (1 + selectedTip)
 
             //format tip
             val formattedAmount = String.format("Total: $%.2f", afterTip /100)
